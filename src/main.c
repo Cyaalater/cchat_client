@@ -36,7 +36,7 @@ on_activate(GtkApplication *app, gpointer user_data)
 
 
     // Getting glade file
-    GtkBuilder *builder = gtk_builder_new_from_file("main.glade");
+    GtkBuilder *builder = gtk_builder_new_from_file("resources/main.glade");
     GtkWidget *win = GTK_WIDGET(gtk_builder_get_object(builder,"win"));
 
     // Widget getters

@@ -1,4 +1,12 @@
 project('CChat','c')
+copy = find_program('copy.py')
+
+run_command(
+    copy,
+    join_paths('src', 'main.glade'),
+    join_paths('resources','main.glade')
+)
+
 
 
 incdir = include_directories('include')
