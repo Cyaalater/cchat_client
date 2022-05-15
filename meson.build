@@ -6,11 +6,16 @@ run_command(
     join_paths('src', 'main.glade'),
     join_paths('resources','main.glade')
 )
+run_command(
+    copy,
+    join_paths('src', 'chat.glade'),
+    join_paths('resources','chat.glade')
+)
 
 
 
 incdir = include_directories('include')
-src = 'include/sockcom/sockcom.c'
+src = ['include/sockcom/sockcom.c','include/namecom/namecom.c']
 gtk_dep = dependency('gtk+-3.0')
 json_dep = dependency('cJSON')
 

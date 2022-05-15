@@ -10,8 +10,38 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <cjson/cJSON.h>
+#include <assert.h>
 
-#define MAX_LINE 30
+#define MAX_LINE 50
+
+// Function to create an already built json struct
+/*
+ * {
+ *      action: String,
+ *      info: [
+ *          ["text":"my man"],
+ *          ["name":"menashe"]
+ *      ]
+ * }
+ */
+static cJSON* JsonBuild(char* action, cJSON* info)
+{
+    // Check if params are okay
+//    assert(cJSON_IsArray(info) == cJSON_True);
+
+    // Inits
+    cJSON *action_json = NULL;
+    cJSON *main_object = cJSON_CreateObject();
+
+    // Modifying the object
+    action_json = cJSON_CreateString(action);
+
+    cJSON_AddItemToObject(main_object,"action",action_json);
+    cJSON_AddItemToObject(main_object,"info",info);
+
+    return main_object;
+}
+
 
 int
 sockcom_send_welcome(char* IP, char* PORT)
@@ -20,6 +50,8 @@ sockcom_send_welcome(char* IP, char* PORT)
     struct addrinfo hints;
     struct addrinfo *response_info;
     memset(&hints, 0, sizeof hints);
+
+
 
     if(getaddrinfo(IP,PORT,&hints,&response_info) == -1)
     {
@@ -40,18 +72,16 @@ sockcom_send_welcome(char* IP, char* PORT)
     }
 
     // DATA SEND
-    cJSON *js_object = cJSON_CreateObject();
-    cJSON *js_text =  NULL;
-
-    js_text = cJSON_CreateString("Hello world");
-
-    cJSON_AddItemToObject(
-            js_object,
-            "text",
-            js_text
+    cJSON *info = cJSON_CreateArray();
+    cJSON *name = cJSON_CreateArray();
+    cJSON_AddItemToArray(name, cJSON_CreateString("name"));
+    cJSON_AddItemToArray(name, cJSON_CreateString("menashe"));
+    cJSON_AddItemToArray(
+            info,
+            name
             );
+    cJSON *js_object = JsonBuild("welcome",info);
 
-    char text[MAX_LINE] = "hey";
     send(sock,cJSON_PrintUnformatted(js_object),strlen(cJSON_PrintUnformatted(js_object)),0);
 
 
