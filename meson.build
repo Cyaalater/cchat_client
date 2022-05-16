@@ -15,7 +15,7 @@ run_command(
 
 
 incdir = include_directories('include')
-src = ['include/sockcom/sockcom.c','include/namecom/namecom.c']
+src = ['include/sockcom/sockcom.c','include/namecom/namecom.c','include/client/client.c']
 gtk_dep = dependency('gtk+-3.0')
 json_dep = dependency('cJSON')
 

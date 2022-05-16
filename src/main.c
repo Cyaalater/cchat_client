@@ -3,6 +3,7 @@
 #include <glib.h>
 #include "include/sockcom/sockcom.h"
 #include "include/namecom/namecom.h"
+#include "include/client/client.h"
 
 struct applyData{
     GtkWidget * typeSwitch;
@@ -11,49 +12,52 @@ struct applyData{
 };
 struct sendData{
     int socket;
-    const gchar* text;
-    GtkWidget* chat_view;
+    GtkEntry* chat_input;
+    GtkTextBuffer* chat_buffer;
 };
 
 static void
-chat_insert(GtkTextBuffer *buffer,const gchar* text)
+chat_insert(GtkTextBuffer *buffer,char* text)
 {
+    if(text == NULL)
+    {
+        return;
+    }
     GtkTextIter iter;
-    gtk_text_buffer_get_iter_at_offset(buffer,&iter,0);
+    gtk_text_buffer_get_iter_at_offset(buffer,&iter, gtk_text_buffer_get_char_count(buffer));
     gtk_text_buffer_insert(buffer,&iter,text,-1);
 }
 
 static void
 activate_send(GtkButton *button, gpointer user_data)
 {
-    g_print("Working!");
     struct sendData* data = user_data;
-    GtkTextView * meni = GTK_TEXT_VIEW(data->chat_view);
-    GtkTextBuffer* textBuffer = gtk_text_buffer_new(NULL);
-    gtk_text_buffer_set_text(textBuffer,data->text,strlen(data->text));
-    gtk_text_view_set_buffer(meni,textBuffer);
-    chat_insert(textBuffer,data->text);
+    const gchar* text = gtk_entry_get_text(GTK_ENTRY(data->chat_input));
+    g_print("%s\n",text);
+    chat_insert(data->chat_buffer,text);
 }
 
 static void
-activate_chat()
+activate_chat(int sock)
 {
     GtkBuilder *chat = gtk_builder_new_from_file("resources/chat.glade");
     GtkWidget *chatObject = GTK_WIDGET(gtk_builder_get_object(chat,"main"));
 
     // Get objects from builder
-    GtkWidget *chat_input = GTK_WIDGET(gtk_builder_get_object(chat,"chat_input"));
+    GtkEntry *chat_input = GTK_ENTRY(gtk_builder_get_object(chat,"chat_input"));
+    GtkTextBuffer *chat_view_text_buffer = GTK_TEXT_BUFFER(gtk_builder_get_object(chat, "chat_view_text_buffer"));
     GtkWidget *chat_send = GTK_WIDGET(gtk_builder_get_object(chat,"chat_send"));
-    GtkWidget *chat_view = GTK_WIDGET(gtk_builder_get_object(chat,"chat_view"));
 
     struct sendData *data = g_new0(struct sendData,1);
     data->socket = 0;
-    data->text = gtk_entry_get_text(GTK_ENTRY(chat_input));
-    data->chat_view = chat_view;
+    data->chat_buffer = chat_view_text_buffer;
+    data->chat_input = chat_input;
 
     g_signal_connect(chat_send,"clicked",G_CALLBACK(activate_send),data);
 
     gtk_widget_show_all(chatObject);
+    client_connect_socket(sock,chat_view_text_buffer,chat_insert);
+//    sockcom_recv_socket(sock,chat_view_text_buffer,chat_insert);
 }
 
 
@@ -77,8 +81,13 @@ on_click(GtkButton *button, gpointer user_data)
     // Kind of assertion
 //    if (sock == -1){return;}
 
+    /*
+     * Upon having a working socket:
+     * - Open up a thread to check for each data received
+     * - Open chat to show the new data and so allow the user to send data
+     */
     // Open up the chat
-    activate_chat();
+    activate_chat(sock);
 
 }
 
@@ -100,10 +109,6 @@ on_activate(GtkApplication *app, gpointer user_data)
     GtkWidget *userNameEntry = GTK_WIDGET(gtk_builder_get_object(builder,"user-name"));
     GtkWidget *serverNameEntry = GTK_WIDGET(gtk_builder_get_object(builder,"server-name"));
 
-    // Widget data
-//    const gchar* username = gtk_entry_get_text(userNameEntry);
-//    const gchar* servername = gtk_entry_get_text(serverNameEntry);
-//    const int type = gtk_switch_get_state(typeSwitch);
 
     d->typeSwitch = typeSwitch;
     d->serverNameEntry = serverNameEntry;

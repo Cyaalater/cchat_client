@@ -11,7 +11,6 @@
 #include <stdio.h>
 #include <cjson/cJSON.h>
 #include <assert.h>
-
 #define MAX_LINE 50
 
 // Function to create an already built json struct
@@ -24,7 +23,7 @@
  *      ]
  * }
  */
-static cJSON* JsonBuild(char* action, cJSON* info)
+cJSON* JsonBuild(char* action, cJSON* info)
 {
     // Check if params are okay
 //    assert(cJSON_IsArray(info) == cJSON_True);
@@ -40,6 +39,16 @@ static cJSON* JsonBuild(char* action, cJSON* info)
     cJSON_AddItemToObject(main_object,"info",info);
 
     return main_object;
+}
+
+char*
+sockcom_recv_socket(int sock)
+{
+    fprintf(stdout,"Working\n");
+    char* res = malloc(sizeof(char)* 40);
+    recv(sock,res,40,0);
+//    fprintf(stdout,"%s",res);
+    return res;
 }
 
 

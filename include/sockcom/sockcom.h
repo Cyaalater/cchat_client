@@ -5,7 +5,11 @@
 #ifndef CCHAT_SOCKCOM_H
 #define CCHAT_SOCKCOM_H
 
+
 int sockcom_send_welcome(char* IP, char* PORT);
+
+char*
+sockcom_recv_socket(int sock);
 
 //int sockcom_send_data();
 //
