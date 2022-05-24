@@ -58,9 +58,8 @@ sockcom_send_welcome(char* IP, char* PORT)
     // GET ADDRINFO
     struct addrinfo hints;
     struct addrinfo *response_info;
+    int option = 1;
     memset(&hints, 0, sizeof hints);
-
-
 
     if(getaddrinfo(IP,PORT,&hints,&response_info) == -1)
     {
@@ -73,7 +72,7 @@ sockcom_send_welcome(char* IP, char* PORT)
             response_info->ai_socktype,
             response_info->ai_protocol
             );
-
+    setsockopt(sock, SOL_SOCKET, (SO_REUSEADDR | SO_REUSEPORT), (char*)&option, sizeof(option));
     // CONNECT
     if(connect(sock,response_info->ai_addr,response_info->ai_addrlen) == -1)
     {
@@ -102,4 +101,23 @@ sockcom_send_welcome(char* IP, char* PORT)
         fprintf(stdout,"%c",welcome_response[i]);
     }
     return sock;
+}
+
+int sockcom_send_data(int sock,char* text)
+{
+    cJSON *info = cJSON_CreateArray();
+    cJSON *name = cJSON_CreateArray();
+    cJSON_AddItemToArray(name, cJSON_CreateString("name"));
+    cJSON_AddItemToArray(name, cJSON_CreateString("ethan"));
+    cJSON_AddItemToArray(info,name);
+
+    cJSON *message = cJSON_CreateArray();
+    cJSON_AddItemToArray(message, cJSON_CreateString("message"));
+    cJSON_AddItemToArray(message, cJSON_CreateString(text));
+    cJSON_AddItemToArray(info,message);
+
+    cJSON *main = JsonBuild("chat",info);
+
+    send(sock, cJSON_PrintUnformatted(main),strlen(cJSON_PrintUnformatted(main)),0);
+
 }

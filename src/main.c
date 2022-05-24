@@ -3,7 +3,17 @@
 #include <glib.h>
 #include "include/sockcom/sockcom.h"
 #include "include/namecom/namecom.h"
-#include "include/client/client.h"
+#include <pthread.h>
+
+// TODO: remove later
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+
+
+//#include "include/client/client.h"
+
+int sock;
 
 struct applyData{
     GtkWidget * typeSwitch;
@@ -23,6 +33,7 @@ chat_insert(GtkTextBuffer *buffer,char* text)
     {
         return;
     }
+    sockcom_send_data(sock,text);
     GtkTextIter iter;
     gtk_text_buffer_get_iter_at_offset(buffer,&iter, gtk_text_buffer_get_char_count(buffer));
     gtk_text_buffer_insert(buffer,&iter,text,-1);
@@ -36,6 +47,27 @@ activate_send(GtkButton *button, gpointer user_data)
     g_print("%s\n",text);
     chat_insert(data->chat_buffer,text);
 }
+
+//TODO: Change it to a file later
+void *chat_thread(void *vargp)
+{
+    while(1)
+    {
+        char* text = malloc(sizeof(char) * 12);
+        if(recv(sock,text,12,0) < 0 )
+        {
+            g_print("failed\n");
+        }
+        for(int i=0; text[i] != '\0'; i++)
+        {
+            g_print("%c",text[i]);
+        }
+        sleep(2);
+    }
+
+}
+
+
 
 static void
 activate_chat(int sock)
@@ -55,9 +87,11 @@ activate_chat(int sock)
 
     g_signal_connect(chat_send,"clicked",G_CALLBACK(activate_send),data);
 
+    pthread_t thread_id;
+    pthread_create(&thread_id,NULL,chat_thread,NULL);
+
     gtk_widget_show_all(chatObject);
-    client_connect_socket(sock,chat_view_text_buffer,chat_insert);
-//    sockcom_recv_socket(sock,chat_view_text_buffer,chat_insert);
+
 }
 
 
@@ -77,7 +111,7 @@ on_click(GtkButton *button, gpointer user_data)
     for(int i=0; text[i]; i++)
         g_print("%c",text[i]);
 
-    int sock = sockcom_send_welcome("127.0.0.1","3000");
+    sock = sockcom_send_welcome("127.0.0.1","3000");
     // Kind of assertion
 //    if (sock == -1){return;}
 

@@ -18,22 +18,32 @@ _Noreturn static void
 *thread_listen(void *ptr_data)
 {
     struct thread_data *data = ptr_data;
-    char *text = NULL;
+    char *text = malloc(sizeof(char) * 30);
     text = "1337";
     while(1)
     {
         fprintf(stdout,"working\n");
 //        text = sockcom_recv_socket(data->socket);
-//        recv(data->socket,text,sizeof(text)+1,0);
+        if (recv(data->socket,text,sizeof(text),0) == -1)
+        {
+            fprintf(stdout,"error: %s\n",strerror(errno));
+        }else{
+            fprintf(stdout,"working recv");
+        }
 
         // Here we do data processing
 
         // Transfer to the text view buffer
-        data->callback(data->buffer,text);
+//        data->callback(data->buffer,text);
 //        text = NULL;
         sleep(3);
     }
-
+//    if (recv(data->socket,text,sizeof(text)+1,0) == -1)
+//        {
+//            fprintf(stdout,"error: %s\n",strerror(errno));
+//        }else{
+//            fprintf(stdout,"working recv");
+//        }
 }
 /*
  * Create a thread that will wait for each message and then add it to the buffer
