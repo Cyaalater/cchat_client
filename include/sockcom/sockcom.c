@@ -94,21 +94,22 @@ sockcom_send_welcome(char* IP, char* PORT)
 
 
     // WAIT AND PROCESS DATA
-    char* welcome_response = malloc(sizeof(char) * 12);
-    recv(sock,welcome_response,12,0);
-    for(int i=0; welcome_response[i] != '\0'; i++)
-    {
-        fprintf(stdout,"%c",welcome_response[i]);
-    }
+//    char* welcome_response = malloc(sizeof(char) * 12);
+//    recv(sock,welcome_response,12,0);
+//    for(int i=0; welcome_response[i] != '\0'; i++)
+//    {
+//        fprintf(stdout,"%c",welcome_response[i]);
+//    }
+    printf("Socket is working");
     return sock;
 }
 
-int sockcom_send_data(int sock,char* text)
+int sockcom_send_data(int sock,char* text,char* userName)
 {
     cJSON *info = cJSON_CreateArray();
     cJSON *name = cJSON_CreateArray();
     cJSON_AddItemToArray(name, cJSON_CreateString("name"));
-    cJSON_AddItemToArray(name, cJSON_CreateString("ethan"));
+    cJSON_AddItemToArray(name, cJSON_CreateString(userName));
     cJSON_AddItemToArray(info,name);
 
     cJSON *message = cJSON_CreateArray();

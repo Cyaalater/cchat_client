@@ -7,6 +7,51 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <netdb.h>
+#include <stdlib.h>
+
+#include <cjson/cJSON.h>
+
+void
+client_chat_insert(char* text, GtkTextBuffer *buffer)
+{
+    GtkTextIter iter;
+    gtk_text_buffer_get_iter_at_offset(buffer,&iter, gtk_text_buffer_get_char_count(buffer));
+    gtk_text_buffer_insert(buffer,&iter,text,-1);
+}
+
+void
+client_chat_handler(char* buffer, GtkTextBuffer *textBuffer)
+{
+//    int endIndex;
+//    while(buffer[endIndex] != '\0')
+//        endIndex++;
+//
+//    buffer = realloc(buffer,endIndex);
+    cJSON *responseObject = cJSON_Parse(buffer);
+    g_print("Working object? : %i\n", cJSON_IsObject(responseObject));
+
+    // For later use
+    cJSON* responseAction = cJSON_GetObjectItem(responseObject,"action");
+
+    cJSON* info = cJSON_GetObjectItem(responseObject,"info");
+    char* name = cJSON_GetStringValue(
+            cJSON_GetArrayItem(cJSON_GetArrayItem(info,0),1)
+            );
+    char* message = cJSON_GetStringValue(
+            cJSON_GetArrayItem(cJSON_GetArrayItem(info,1),1)
+    );
+
+
+    if (cJSON_IsString(responseAction) && strcmp(cJSON_GetStringValue(responseAction),"chat") == 0)
+    {
+        char* formatted_buffer = malloc(sizeof(char) * 48);
+        sprintf(formatted_buffer, "%s -> %s\n",name,message);
+        client_chat_insert(formatted_buffer,textBuffer);
+    }
+
+}
+
+
 
 struct thread_data{
     void (*callback)(GtkTextBuffer *textBuffer, char* text);

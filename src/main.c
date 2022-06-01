@@ -3,6 +3,7 @@
 #include <glib.h>
 #include "include/sockcom/sockcom.h"
 #include "include/namecom/namecom.h"
+#include "include/client/client.h"
 #include <pthread.h>
 
 // TODO: remove later
@@ -24,19 +25,18 @@ struct sendData{
     int socket;
     GtkEntry* chat_input;
     GtkTextBuffer* chat_buffer;
+    const gchar *user_name;
 };
 
 static void
-chat_insert(GtkTextBuffer *buffer,char* text)
+insert_handler(GtkTextBuffer *buffer, char* text, char* name)
 {
     if(text == NULL)
     {
         return;
     }
-    sockcom_send_data(sock,text);
-    GtkTextIter iter;
-    gtk_text_buffer_get_iter_at_offset(buffer,&iter, gtk_text_buffer_get_char_count(buffer));
-    gtk_text_buffer_insert(buffer,&iter,text,-1);
+    sockcom_send_data(sock,text,name);
+//    client_chat_insert(text,buffer);
 }
 
 static void
@@ -45,23 +45,27 @@ activate_send(GtkButton *button, gpointer user_data)
     struct sendData* data = user_data;
     const gchar* text = gtk_entry_get_text(GTK_ENTRY(data->chat_input));
     g_print("%s\n",text);
-    chat_insert(data->chat_buffer,text);
+    insert_handler(data->chat_buffer, text,data->user_name);
 }
 
 //TODO: Change it to a file later
-void *chat_thread(void *vargp)
+void *chat_thread(void *arg)
 {
+    GtkTextBuffer *textBuffer = arg;
     while(1)
     {
-        char* text = malloc(sizeof(char) * 12);
-        if(recv(sock,text,12,0) < 0 )
+        char* text = malloc(sizeof(char) * 128);
+        if(recv(sock,text,128,0) < 0 )
         {
             g_print("failed\n");
         }
+        g_print("Data recieved: \n");
         for(int i=0; text[i] != '\0'; i++)
         {
             g_print("%c",text[i]);
         }
+        g_print("\n");
+        client_chat_handler(text,arg);
         sleep(2);
     }
 
@@ -70,7 +74,7 @@ void *chat_thread(void *vargp)
 
 
 static void
-activate_chat(int sock)
+activate_chat(int sock,const gchar *userP)
 {
     GtkBuilder *chat = gtk_builder_new_from_file("resources/chat.glade");
     GtkWidget *chatObject = GTK_WIDGET(gtk_builder_get_object(chat,"main"));
@@ -84,11 +88,12 @@ activate_chat(int sock)
     data->socket = 0;
     data->chat_buffer = chat_view_text_buffer;
     data->chat_input = chat_input;
+    data->user_name = userP;
 
     g_signal_connect(chat_send,"clicked",G_CALLBACK(activate_send),data);
 
     pthread_t thread_id;
-    pthread_create(&thread_id,NULL,chat_thread,NULL);
+    pthread_create(&thread_id,NULL,chat_thread,data->chat_buffer);
 
     gtk_widget_show_all(chatObject);
 
@@ -111,7 +116,7 @@ on_click(GtkButton *button, gpointer user_data)
     for(int i=0; text[i]; i++)
         g_print("%c",text[i]);
 
-    sock = sockcom_send_welcome("127.0.0.1","3000");
+    sock = sockcom_send_welcome("localhost","3000");
     // Kind of assertion
 //    if (sock == -1){return;}
 
@@ -121,7 +126,7 @@ on_click(GtkButton *button, gpointer user_data)
      * - Open chat to show the new data and so allow the user to send data
      */
     // Open up the chat
-    activate_chat(sock);
+    activate_chat(sock,gtk_entry_get_text(userP));
 
 }
 
