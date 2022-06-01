@@ -116,7 +116,7 @@ on_click(GtkButton *button, gpointer user_data)
     for(int i=0; text[i]; i++)
         g_print("%c",text[i]);
 
-    sock = sockcom_send_welcome("localhost","3000");
+    sock = sockcom_send_welcome(gtk_entry_get_text(serverP),"3000");
     // Kind of assertion
 //    if (sock == -1){return;}
 
